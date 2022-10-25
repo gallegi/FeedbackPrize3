@@ -30,3 +30,6 @@ class CFG:
     version_note = 'lit_v4_comet'
     sample = None
     patience = 10
+
+CFG.data_file = f'{CFG.root_folder}/data/train_5folds.csv'
+CFG.model_dir = f'{CFG.root_folder}/models/'
