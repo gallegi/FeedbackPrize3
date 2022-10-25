@@ -1,5 +1,6 @@
 import os
-
+import argparse
+import importlib
 import pandas as pd
 import torch
 
@@ -9,10 +10,19 @@ from pytorch_lightning.loggers import CSVLogger, CometLogger
 from pytorch_lightning.callbacks import LearningRateMonitor
 from pytorch_lightning.callbacks import ModelCheckpoint
 
-from configs.fb_config_v4 import CFG
+from configs.default_config import CFG
 from src.general import seed_torch
 from src.dataset import FBDataset
 from src.model import LitFB3
+
+parser = argparse.ArgumentParser(description='Training arguments')
+parser.add_argument('--config', type=str, default='default_config',
+                    help='config file to run an experiment')
+
+args = parser.parse_args()
+
+config_module = importlib.import_module(f'configs.{args.config}')
+CFG = config_module.CFG
 
 seed_torch(CFG.seed) # set initial seed
 
