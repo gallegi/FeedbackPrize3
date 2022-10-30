@@ -1,14 +1,15 @@
+# weighted sum of multiple hidden layers
 class CFG:
     root_folder = './'
     run_folds = [0,1,2,3,4]
-    accelerator = 'mps'
+    accelerator = 'gpu'
     devices = 1
     comet_api_key = 'zR96oNVqYeTUXArmgZBc7J9Jp'
     comet_project_name = 'FeedbackPrize3'
     num_workers=0
     model="microsoft/deberta-v3-base"
     n_hidden_pool = 4
-    gradient_checkpointing=False
+    gradient_checkpointing=True
     scheduler='cosine' # ['linear', 'cosine']
     batch_scheduler=True
     num_cycles=0.5
@@ -19,8 +20,8 @@ class CFG:
     min_lr=1e-6
     eps=1e-6
     betas=(0.9, 0.999)
-    batch_size=2
-    max_len=512
+    batch_size=16
+    max_len=1429
     weight_decay=0.01
     gradient_accumulation_steps=1
     max_grad_norm=1000

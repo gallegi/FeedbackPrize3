@@ -70,6 +70,10 @@ class LitFB3(pl.LightningModule):
         if self.cfg.gradient_checkpointing:
             self.model.gradient_checkpointing_enable()
         self.pool = MeanPooling()
+        self.attention_hidden_weights = nn.Sequential(
+            nn.Linear(self.cfg.n_hidden_pool, 1),
+            nn.Softmax(dim=-2),
+        )
         self.fc = nn.Linear(self.config.hidden_size, 6)
         self._init_weights(self.fc)
 
@@ -90,8 +94,13 @@ class LitFB3(pl.LightningModule):
         
     def feature(self, inputs):
         outputs = self.model(**inputs)
-        last_hidden_states = outputs[0]
-        feature = self.pool(last_hidden_states, inputs['attention_mask'])
+        n_last_hidden_states = [self.pool(out, inputs['attention_mask']) for out in outputs.hidden_states[-self.cfg.n_hidden_pool:]]
+        feature = torch.stack(n_last_hidden_states, axis=-1)
+        attention_hidden = self.attention_hidden_weights(feature)
+        # ------ weighted sum -------
+        feature = feature * attention_hidden
+        feature = feature.sum(axis=-1)
+        # ---------------------------
         return feature
 
     def forward(self, inputs):
@@ -102,7 +111,7 @@ class LitFB3(pl.LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         optimizer_parameters = get_optimizer_params(self,
-                                        encoder_lr=self.cfg.encoder_lr, 
+                                        encoder_lr=self.cfg.encoder_lr,
                                         decoder_lr=self.cfg.decoder_lr,
                                         weight_decay=self.cfg.weight_decay)
         optimizer = AdamW(optimizer_parameters, lr=self.cfg.encoder_lr, eps=self.cfg.eps, betas=self.cfg.betas)
