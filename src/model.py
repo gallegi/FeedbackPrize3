@@ -56,36 +56,36 @@ class LitFB3(pl.LightningModule):
         super().__init__()
         self.cfg = cfg
         if config_path is None:
-            self.config = AutoConfig.from_pretrained(cfg.model, output_hidden_states=True)
-            self.config.hidden_dropout = 0.
-            self.config.hidden_dropout_prob = 0.
-            self.config.attention_dropout = 0.
-            self.config.attention_probs_dropout_prob = 0.
+            self.model_config = AutoConfig.from_pretrained(cfg.model, output_hidden_states=True)
+            self.model_config.hidden_dropout = 0.
+            self.model_config.hidden_dropout_prob = 0.
+            self.model_config.attention_dropout = 0.
+            self.model_config.attention_probs_dropout_prob = 0.
         else:
-            self.config = torch.load(config_path)
+            self.model_config = torch.load(config_path)
         if pretrained:
-            self.model = AutoModel.from_pretrained(cfg.model, config=self.config)
+            self.model = AutoModel.from_pretrained(cfg.model, config=self.model_config)
         else:
-            self.model = AutoModel(self.config)
+            self.model = AutoModel(self.model_config)
         if self.cfg.gradient_checkpointing:
             self.model.gradient_checkpointing_enable()
         self.pool = MeanPooling()
         self.attention_hidden_weights = nn.Sequential(
-            nn.Linear(self.cfg.hidden_size, 1),
+            nn.Linear(self.model_config.hidden_size, 1),
             nn.Softmax(dim=-2),
         )
-        self.fc = nn.Linear(self.config.hidden_size, 6)
+        self.fc = nn.Linear(self.model_config.hidden_size, 6)
         self._init_weights(self.fc)
 
         self.criterion = nn.SmoothL1Loss(reduction='mean') # RMSELoss(reduction="mean")
         
     def _init_weights(self, module):
         if isinstance(module, nn.Linear):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0, std=self.model_config.initializer_range)
             if module.bias is not None:
                 module.bias.data.zero_()
         elif isinstance(module, nn.Embedding):
-            module.weight.data.normal_(mean=0.0, std=self.config.initializer_range)
+            module.weight.data.normal_(mean=0.0, std=self.model_config.initializer_range)
             if module.padding_idx is not None:
                 module.weight.data[module.padding_idx].zero_()
         elif isinstance(module, nn.LayerNorm):
@@ -99,7 +99,7 @@ class LitFB3(pl.LightningModule):
         attention_hidden = self.attention_hidden_weights(hidden_feature)
         # ------ weighted sum -------
         att_feature = hidden_feature * attention_hidden
-        feature = att_feature.sum(axis=-1)
+        feature = att_feature.sum(axis=-2)
         # ---------------------------
         return feature
 
