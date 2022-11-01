@@ -28,7 +28,7 @@ class CFG:
     target_cols=['cohesion', 'syntax', 'vocabulary', 'phraseology', 'grammar', 'conventions']
     seed=42
     n_fold=45
-    version_note = 'lit_v4_comet'
+    version_note = 'weighted_sum_hidden'
     sample = None
     patience = 10
 
