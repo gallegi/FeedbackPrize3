@@ -65,7 +65,7 @@ for valid_fold in CFG.run_folds:
     lit_module = LitFB3(CFG, pretrained=True)
 
     # logger = CSVLogger(CFG.output_dir, name=f'fold{valid_fold}')
-    logger = CometLogger(api_key=CFG.comet_api_key, project_name=CFG.comet_project_name, experiment_name=CFG.output_dir_name)
+    logger = CometLogger(api_key=CFG.comet_api_key, project_name=CFG.comet_project_name, experiment_name=CFG.output_dir_name + f'_fold{valid_fold}')
     lr_monitor = LearningRateMonitor(logging_interval='epoch')
     checkpointer = ModelCheckpoint(
          dirpath=os.path.join(CFG.output_dir, f'fold{valid_fold}'),
